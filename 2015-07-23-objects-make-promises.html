@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+
+    <title>Objects Make Promises</title>
+
+    <meta name="description" content="Make your codebase more maintainable">
+    <meta name="author" content="Ramon Tayag">
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/black.css" id="theme">
+
+    <!-- Code syntax highlighting -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+
+    <!-- Printing and PDF exports -->
+    <script>
+      var link = document.createElement( 'link' );
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+      document.getElementsByTagName( 'head' )[0].appendChild( link );
+    </script>
+
+    <!--[if lt IE 9]>
+    <script src="lib/js/html5shiv.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <div class="reveal">
+
+      <!-- Any section element inside of this container is displayed as a slide -->
+      <div class="slides">
+        <section data-markdown>
+          <script type="text/template">
+            # Objects Make Promises
+          </script>
+        </section>
+
+        <section data-markdown>
+          <script type="text/template">
+            ## Usual Scenario
+
+            - inherit a large code base
+            - lots of meta programming
+            - make a change
+            - run tests, all pass
+            - deploy and get a call at 10pm
+          </script>
+        </section>
+
+        <section>
+          <section data-markdown>
+            <script type="text/template">
+              ### Lessons Learned
+
+              - Objects have an API
+              - Treat changes like changes in gems
+              - Searching the code base. `grep` is your friend. Search the code base for the class name, and the method name.
+              - Safety net 1: Tests
+              - Safety net 2: Logging
+            </script>
+          </section>
+          <section data-markdown>
+            <script type="text/template">
+              ### Objects have an API
+
+              - all objects have an API
+              - make a promise to the ones that use it
+            </script>
+          </section>
+          <section data-markdown>
+            <script type="text/template">
+              ### Like a gem
+
+              Behave as if I'm updating a gem I maintain
+            </script>
+          </section>
+          <section data-markdown>
+            <script type="text/template">
+              ### Text search
+
+              Search the entire code base
+            </script>
+          </section>
+          <section data-markdown>
+            <script type="text/template">
+              ### Safety net 1: Tests
+
+              Lucky if tests catch it
+            </script>
+          </section>
+          <section data-markdown>
+            <script type="text/template">
+              ### Safety net 2: Tests
+
+              Have a strong suspicion that it's being used? Log it.
+
+              ```ruby
+              def i_think_someone_calls_me
+                Rails.logger.info(
+                  "Deprecated method i_think_someone_calls_me" +
+                  " is still being called by #{caller}"
+                )
+                # does more stuff
+              end
+              ```
+
+              `ActiveSupport::Deprecation`
+            </script>
+          </section>
+        </section>
+
+        <section>
+          <section data-markdown>
+            <script type="text/template">
+              ## Passing the baton
+
+              - Integration tests
+              - Minimize metaprogramming
+              - Forced to meta program?
+            </script>
+          </section>
+          <section data-markdown>
+            <script type="text/template">
+              ### Integration tests
+
+              - likely lessen major breakage
+              - it will be difficult and expensive to cover unit test level code
+            </script>
+          </section>
+          <section data-markdown>
+            <script type="text/template">
+              ### Minimize metaprogramming
+
+              This likely make things unsearchable.
+            </script>
+          </section>
+          <section data-markdown>
+            <script type="text/template">
+              ### Meta-programming
+
+              What tests will alert future developers?
+            </script>
+          </section>
+          <section data-markdown>
+            <script type="text/template">
+              ### Meta-programming part 2
+
+              ```ruby
+              class Meta
+                method_list = [:magic, :unexplained]
+                method_list.each do |method_name|
+                  define_method method_name do
+                    "#{method_name} rocks"
+                  end
+                end
+              end
+              ```
+            </script>
+          </section>
+          <section data-markdown>
+            <script type="text/template">
+              ### Meta-programming part 3
+              ```
+              RSpec.describe MetaUser do
+
+                describe "#rock" do
+                  it "rocks the meta output" do
+                    meta = Meta.new
+                    allow(meta).to receive(:magic).and_return("Output of magic")
+                    meta_user = MetaUser.new(meta: meta)
+                    expect(meta_user.rock(:magic)).to eq "Rocking Output of magic"
+                  end
+                end
+
+              end
+              ```
+            </script>
+          </section>
+          <section data-markdown>
+            <script type="text/template">
+              ### Meta-programming part 4
+
+              #### Scenarios
+
+              - If `:magic` is removed from `method_list`, the `MetaUser` spec will continue to pass
+              - If its behaviour changes, then the ones using that class might assume wrong output
+            </script>
+          </section>
+          <section data-markdown>
+            <script type="text/template">
+              ### Meta-programming part 5
+
+              #### Solutions
+
+              - `expect(meta).to respond_to(:magic)`
+              - Cover integration test
+              - Do not stub
+
+              What I do depends on difficulty vs benefit
+            </script>
+          </section>
+
+        </section>
+
+        <section data-markdown>
+          <script type="text/template">
+            ## Questions and Suggestions
+          </script>
+        </section>
+      </div>
+
+    </div>
+
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.js"></script>
+
+    <script>
+
+      // Full list of configuration options available at:
+    // https://github.com/hakimel/reveal.js#configuration
+    Reveal.initialize({
+      controls: true,
+      progress: true,
+      history: true,
+      center: true,
+
+      transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+      // Optional reveal.js plugins
+      dependencies: [
+        { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+        { src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+        { src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+        { src: 'plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
+        { src: 'plugin/zoom-js/zoom.js', async: true },
+        { src: 'plugin/notes/notes.js', async: true }
+      ]
+    });
+
+    </script>
+
+  </body>
+</html>
